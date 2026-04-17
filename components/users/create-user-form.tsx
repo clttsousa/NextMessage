@@ -6,6 +6,7 @@ import { userSchema } from '@/lib/schemas/user';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { Card } from '@/components/ui/card';
 
 type FormValues = z.infer<typeof userSchema>;
 
@@ -16,19 +17,25 @@ export function CreateUserForm() {
   const submit = async (values: FormValues) => {
     const res = await fetch('/api/users', { method: 'POST', body: JSON.stringify(values) });
     const data = await res.json();
-    if (!res.ok) setMsg(data.error || 'Erro');
+    if (!res.ok) setMsg(data.error || 'Erro ao criar usuário');
     else { setMsg('Usuário criado com sucesso'); window.location.reload(); }
   };
 
-  return <form onSubmit={handleSubmit(submit)} className="grid gap-2 rounded-lg border border-slate-800 p-3 md:grid-cols-3">
-    <input placeholder="Nome" {...register('name')} />
-    <input placeholder="E-mail" {...register('email')} />
-    <input placeholder="Senha" type="password" {...register('password')} />
-    <select {...register('role')}><option value="ATTENDANT">Atendente</option><option value="ADMIN">Administrador</option></select>
-    <label className="flex items-center gap-2"><input type="checkbox" {...register('isActive')} />Ativo</label>
-    <label className="flex items-center gap-2"><input type="checkbox" {...register('mustChangePassword')} />Troca de senha no primeiro login</label>
-    {Object.values(errors).map((e, i) => <p key={i} className="text-rose-300 text-sm md:col-span-3">{e?.message as string}</p>)}
-    {msg && <p className="text-sm md:col-span-3">{msg}</p>}
-    <Button disabled={isSubmitting} className="md:col-span-3">Criar usuário</Button>
-  </form>;
+  return (
+    <Card>
+      <h2 className="text-lg font-semibold text-slate-50">Criar usuário</h2>
+      <p className="mt-1 text-sm text-slate-400">Cadastre novos operadores e configure o perfil de acesso.</p>
+      <form onSubmit={handleSubmit(submit)} className="mt-4 grid gap-3 md:grid-cols-2">
+        <div><label className="mb-1 block">Nome completo</label><input placeholder="Ex.: Maria Souza" {...register('name')} /></div>
+        <div><label className="mb-1 block">E-mail</label><input placeholder="usuario@empresa.com" {...register('email')} /></div>
+        <div><label className="mb-1 block">Senha temporária</label><input placeholder="Defina uma senha" type="password" {...register('password')} /></div>
+        <div><label className="mb-1 block">Perfil</label><select {...register('role')}><option value="ATTENDANT">Atendente</option><option value="ADMIN">Administrador</option></select></div>
+        <label className="flex items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/40 p-3"><input type="checkbox" className="h-4 w-4" {...register('isActive')} />Conta ativa</label>
+        <label className="flex items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/40 p-3"><input type="checkbox" className="h-4 w-4" {...register('mustChangePassword')} />Troca de senha no primeiro login</label>
+        {Object.values(errors).map((e, i) => <p key={i} className="text-sm text-rose-300 md:col-span-2">{e?.message as string}</p>)}
+        {msg && <p className="text-sm text-emerald-300 md:col-span-2">{msg}</p>}
+        <div className="md:col-span-2"><Button disabled={isSubmitting}>Criar usuário</Button></div>
+      </form>
+    </Card>
+  );
 }
