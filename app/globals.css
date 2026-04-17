@@ -2,10 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-background text-foreground antialiased;
+:root {
+  color-scheme: dark;
 }
 
-input, textarea, select {
-  @apply bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm;
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image: radial-gradient(circle at top right, rgba(79, 124, 255, 0.12), transparent 32%), radial-gradient(circle at 10% 20%, rgba(25, 196, 168, 0.08), transparent 28%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2b3654 #111726;
+}
+
+@layer base {
+  input,
+  textarea,
+  select {
+    @apply w-full rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2.5 text-sm text-slate-100 shadow-sm transition outline-none placeholder:text-slate-500 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/30;
+  }
+
+  textarea {
+    @apply min-h-28 leading-relaxed;
+  }
+
+  label {
+    @apply text-sm font-medium text-slate-200;
+  }
+}
+
+@layer utilities {
+  .surface {
+    @apply rounded-2xl border border-slate-800/80 bg-slate-900/70 shadow-[0_6px_30px_rgba(1,8,20,0.45)];
+  }
+
+  .subtle-divider {
+    @apply border-slate-800/80;
+  }
 }

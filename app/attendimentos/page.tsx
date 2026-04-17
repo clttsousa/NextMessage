@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db/prisma';
 import { AttendancesTable } from '@/components/attendances/attendances-table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card } from '@/components/ui/card';
 
 export default async function AttendancesPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   await requireAuth();
@@ -23,25 +25,33 @@ export default async function AttendancesPage({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold">Atendimentos</h1>
-        <Link href="/attendimentos/novo"><Button>Novo atendimento</Button></Link>
-      </div>
-      <form className="grid gap-3 rounded-lg border border-slate-800 p-3 md:grid-cols-3">
-        <input name="q" defaultValue={q} placeholder="Buscar por cliente, protocolo ou telefone" />
-        <select name="status" defaultValue={status || ''}>
-          <option value="">Todos os status</option>
-          <option value="PENDENTE">Pendente</option>
-          <option value="EM_ATENDIMENTO">Em atendimento</option>
-          <option value="SEM_RETORNO">Sem retorno</option>
-          <option value="RETORNAR_DEPOIS">Retornar depois</option>
-          <option value="RESOLVIDO">Resolvido</option>
-          <option value="VIROU_OS">Virou O.S.</option>
-          <option value="CANCELADO">Cancelado</option>
-        </select>
-        <button className="rounded-md border border-slate-700 px-3">Filtrar</button>
-      </form>
-      <AttendancesTable data={attendances.map(a => ({ id: a.id, protocol: a.protocol, customerName: a.customerName, phone: a.phone, status: a.status, assigneeName: a.assignee?.name || null }))} />
+      <PageHeader title="Atendimentos" subtitle="Gerencie fila, responsável e próximos passos com prioridade operacional." actions={<Link href="/attendimentos/novo"><Button>Novo atendimento</Button></Link>} />
+
+      <Card>
+        <form className="grid gap-3 md:grid-cols-[1.3fr,1fr,auto,auto] md:items-end">
+          <div>
+            <label className="mb-1 block">Busca inteligente</label>
+            <input name="q" defaultValue={q} placeholder="Cliente, protocolo ou telefone" />
+          </div>
+          <div>
+            <label className="mb-1 block">Status</label>
+            <select name="status" defaultValue={status || ''}>
+              <option value="">Todos os status</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_ATENDIMENTO">Em atendimento</option>
+              <option value="SEM_RETORNO">Sem retorno</option>
+              <option value="RETORNAR_DEPOIS">Retornar depois</option>
+              <option value="RESOLVIDO">Resolvido</option>
+              <option value="VIROU_OS">Virou O.S.</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </div>
+          <Button className="h-[42px]" type="submit">Aplicar filtros</Button>
+          <Link href="/attendimentos" className="inline-flex h-[42px] items-center justify-center rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800">Limpar</Link>
+        </form>
+      </Card>
+
+      <AttendancesTable data={attendances.map(a => ({ id: a.id, protocol: a.protocol, customerName: a.customerName, phone: a.phone, reason: a.reason, status: a.status, assigneeName: a.assignee?.name || null, referenceDate: a.referenceDate.toISOString(), originalAttendantName: a.originalAttendantName }))} />
     </div>
   );
 }

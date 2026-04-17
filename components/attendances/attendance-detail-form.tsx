@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { attendanceUpdateSchema } from '@/lib/schemas/attendance';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type FormValues = z.infer<typeof attendanceUpdateSchema>;
 
@@ -32,7 +34,7 @@ export function AttendanceDetailForm({ attendance, canEdit, canClaim, isAdmin, u
     const res = await fetch(`/api/attendances/${attendance.id}`, { method: 'PATCH', body: JSON.stringify(values) });
     const data = await res.json();
     if (!res.ok) return setMsg(data.error || 'Erro ao atualizar');
-    setMsg('Atendimento atualizado com sucesso');
+    setMsg('Atendimento atualizado com sucesso.');
     window.location.reload();
   };
 
@@ -56,34 +58,63 @@ export function AttendanceDetailForm({ attendance, canEdit, canClaim, isAdmin, u
 
   return (
     <div className="space-y-4">
-      {canClaim && <Button type="button" onClick={claim}>Assumir atendimento</Button>}
-      {isAdmin && attendance.assignedTo && (
-        <div className="flex gap-2 items-center">
-          <label>Reatribuir:</label>
-          <select onChange={(e) => e.target.value && reassign(e.target.value)} defaultValue="">
-            <option value="">Selecione</option>
-            {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </select>
+      <Card>
+        <div className="flex flex-wrap items-center gap-2">
+          {canClaim && <Button type="button" onClick={claim}>Assumir atendimento</Button>}
+          {isAdmin && (attendance.status === 'RESOLVIDO' || attendance.status === 'VIROU_OS' || attendance.status === 'CANCELADO') && (
+            <ConfirmDialog
+              trigger={<Button type="button" variant="secondary">Reabrir atendimento</Button>}
+              title="Reabrir atendimento"
+              description="Este atendimento voltará para a fila operacional com status ativo. Deseja continuar?"
+              confirmLabel="Sim, reabrir"
+              onConfirm={reopen}
+            />
+          )}
+          {isAdmin && attendance.assignedTo && (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 p-2">
+              <label className="text-xs text-slate-300">Reatribuir responsável</label>
+              <select onChange={(e) => e.target.value && reassign(e.target.value)} defaultValue="" className="min-w-52">
+                <option value="">Selecione</option>
+                {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </div>
+          )}
         </div>
-      )}
-      {isAdmin && (attendance.status === 'RESOLVIDO' || attendance.status === 'VIROU_OS' || attendance.status === 'CANCELADO') && (
-        <Button type="button" onClick={reopen} className="bg-amber-600">Reabrir atendimento</Button>
-      )}
-      <form onSubmit={handleSubmit(submit)} className="grid gap-3 rounded-lg border border-slate-800 p-4 md:grid-cols-2">
-        <div><label>Status</label><select {...register('status')} disabled={!canEdit}><option value="PENDENTE">Pendente</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="SEM_RETORNO">Sem retorno</option><option value="RETORNAR_DEPOIS">Retornar depois</option><option value="RESOLVIDO">Resolvido</option><option value="VIROU_OS">Virou O.S.</option><option value="CANCELADO">Cancelado</option></select></div>
-        <div><label>Resultado do contato</label><input {...register('serviceResult')} disabled={!canEdit} /></div>
-        <div className="md:col-span-2"><label>Desfecho</label><textarea {...register('outcome')} disabled={!canEdit} /></div>
-        <div className="md:col-span-2"><label>Observações</label><textarea {...register('notes')} disabled={!canEdit} /></div>
-        <div><label>Número da O.S.</label><input {...register('serviceOrderNumber')} disabled={!canEdit} /></div>
-        <div><label>Justificativa sem O.S.</label><input {...register('serviceOrderJustification')} disabled={!canEdit} /></div>
-        <div className="md:col-span-2"><label>Motivo cancelamento</label><input {...register('cancellationReason')} disabled={!canEdit} /></div>
-        <div className="md:col-span-2 flex items-center gap-2"><input type="checkbox" {...register('needsFollowUp')} disabled={!canEdit} /><label>Precisa de retorno</label></div>
-        <div><label>Data de retorno (ISO)</label><input {...register('followUpDate')} disabled={!canEdit} /></div>
-        <div className="md:col-span-2 flex items-center gap-2"><input type="checkbox" {...register('becameServiceOrder')} disabled={!canEdit} /><label>Virou ordem de serviço</label></div>
-        {Object.values(errors).map((e, i) => <p key={i} className="md:col-span-2 text-sm text-rose-300">{e?.message as string}</p>)}
-        {canEdit && <Button disabled={isSubmitting} className="md:col-span-2">Salvar atualização</Button>}
+      </Card>
+
+      <form onSubmit={handleSubmit(submit)} className="space-y-4">
+        <Card>
+          <h3 className="mb-3 text-base font-semibold text-slate-50">Status e responsabilidade</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div><label className="mb-1 block">Status</label><select {...register('status')} disabled={!canEdit}><option value="PENDENTE">Pendente</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="SEM_RETORNO">Sem retorno</option><option value="RETORNAR_DEPOIS">Retornar depois</option><option value="RESOLVIDO">Resolvido</option><option value="VIROU_OS">Virou O.S.</option><option value="CANCELADO">Cancelado</option></select></div>
+            <div><label className="mb-1 block">Resultado do contato</label><input {...register('serviceResult')} disabled={!canEdit} placeholder="Resumo objetivo do contato" /></div>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="mb-3 text-base font-semibold text-slate-50">Evolução do atendimento</h3>
+          <div className="space-y-3">
+            <div><label className="mb-1 block">Desfecho</label><textarea {...register('outcome')} disabled={!canEdit} /></div>
+            <div><label className="mb-1 block">Observações</label><textarea {...register('notes')} disabled={!canEdit} /></div>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="mb-3 text-base font-semibold text-slate-50">Retorno e O.S.</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="flex items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/40 p-3"><input type="checkbox" className="h-4 w-4" {...register('needsFollowUp')} disabled={!canEdit} />Precisa de retorno</label>
+            <div><label className="mb-1 block">Data de retorno (ISO)</label><input {...register('followUpDate')} disabled={!canEdit} /></div>
+            <label className="flex items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/40 p-3"><input type="checkbox" className="h-4 w-4" {...register('becameServiceOrder')} disabled={!canEdit} />Virou ordem de serviço</label>
+            <div><label className="mb-1 block">Número da O.S.</label><input {...register('serviceOrderNumber')} disabled={!canEdit} /></div>
+            <div><label className="mb-1 block">Justificativa sem O.S.</label><input {...register('serviceOrderJustification')} disabled={!canEdit} /></div>
+            <div><label className="mb-1 block">Motivo do cancelamento</label><input {...register('cancellationReason')} disabled={!canEdit} /></div>
+          </div>
+        </Card>
+
+        {Object.values(errors).map((e, i) => <p key={i} className="text-sm text-rose-300">{e?.message as string}</p>)}
+        {msg && <p className="text-sm text-emerald-300">{msg}</p>}
+        {canEdit && <Button disabled={isSubmitting}>{isSubmitting ? 'Salvando...' : 'Salvar atualização'}</Button>}
       </form>
-      {msg && <p className="text-sm text-amber-300">{msg}</p>}
     </div>
   );
 }
