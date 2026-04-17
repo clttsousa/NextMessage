@@ -5,14 +5,58 @@ import { AvatarInitials } from '@/components/ui/avatar-initials';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/ui/page-header';
 import { SemanticDiff } from '@/components/audit/semantic-diff';
+import { Button } from '@/components/ui/button';
 
-export default async function AuditPage() {
+export default async function AuditPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   await requireAdmin();
-  const logs = await prisma.auditLog.findMany({ include: { actor: true }, orderBy: { createdAt: 'desc' }, take: 100 });
+
+  const actor = typeof searchParams.actor === 'string' ? searchParams.actor : undefined;
+  const action = typeof searchParams.action === 'string' ? searchParams.action : undefined;
+  const entity = typeof searchParams.entity === 'string' ? searchParams.entity : undefined;
+
+  const logs = await prisma.auditLog.findMany({
+    where: {
+      actorUserId: actor || undefined,
+      action: action || undefined,
+      entityType: entity || undefined
+    },
+    include: { actor: true },
+    orderBy: { createdAt: 'desc' },
+    take: 100
+  });
+
+  const actors = await prisma.user.findMany({ where: { isActive: true }, select: { id: true, name: true }, take: 50 });
 
   return (
     <div className="space-y-4">
       <PageHeader title="Auditoria" subtitle="Rastreie alterações de forma semântica, com comparação de antes/depois por campo." />
+
+      <Card>
+        <form className="grid gap-3 md:grid-cols-4 md:items-end">
+          <div>
+            <label className="mb-1 block">Usuário</label>
+            <select name="actor" defaultValue={actor ?? ''}>
+              <option value="">Todos</option>
+              {actors.map((u) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block">Ação</label>
+            <input name="action" defaultValue={action} placeholder="Ex: UPDATE" />
+          </div>
+          <div>
+            <label className="mb-1 block">Entidade</label>
+            <input name="entity" defaultValue={entity} placeholder="Ex: ATTENDANCE" />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit">Filtrar</Button>
+            <a href="/auditoria" className="inline-flex h-10 items-center rounded-xl border border-slate-700 px-4 text-sm">Limpar</a>
+          </div>
+        </form>
+      </Card>
+
       <div className="space-y-3">
         {logs.map((l) => (
           <Card key={l.id}>

@@ -1,6 +1,7 @@
+import { Prisma, PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
 
-export async function writeAuditLog(params: {
+type AuditParams = {
   actorUserId?: string | null;
   entityType: string;
   entityId: string;
@@ -9,8 +10,12 @@ export async function writeAuditLog(params: {
   newValues?: unknown;
   ipAddress?: string | null;
   userAgent?: string | null;
-}) {
-  await prisma.auditLog.create({
+};
+
+type AuditClient = PrismaClient | Prisma.TransactionClient;
+
+async function writeWithClient(client: AuditClient, params: AuditParams) {
+  await client.auditLog.create({
     data: {
       actorUserId: params.actorUserId,
       entityType: params.entityType,
@@ -22,4 +27,12 @@ export async function writeAuditLog(params: {
       userAgent: params.userAgent
     }
   });
+}
+
+export async function writeAuditLog(params: AuditParams) {
+  await writeWithClient(prisma, params);
+}
+
+export async function writeAuditLogTx(client: Prisma.TransactionClient, params: AuditParams) {
+  await writeWithClient(client, params);
 }

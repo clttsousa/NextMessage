@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/page-header';
 
 export default async function UsersPage() {
   await requireAdmin();
-  const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+  const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' }, select: { id: true, name: true, email: true, role: true, isActive: true, mustChangePassword: true, lastLoginAt: true } });
 
   return (
     <div className="space-y-4">
@@ -24,6 +24,7 @@ export default async function UsersPage() {
               <th className="p-3 text-left font-medium">Perfil</th>
               <th className="p-3 text-left font-medium">Status</th>
               <th className="p-3 text-left font-medium">Último login</th>
+              <th className="p-3 text-left font-medium">Troca de senha</th>
               <th className="p-3 text-left font-medium">Ações</th>
             </tr>
           </thead>
@@ -42,6 +43,7 @@ export default async function UsersPage() {
                 <td className="p-3"><RoleBadge role={u.role} /></td>
                 <td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${u.isActive ? 'bg-emerald-500/15 text-emerald-200' : 'bg-slate-600/20 text-slate-300'}`}>{u.isActive ? 'Ativo' : 'Inativo'}</span></td>
                 <td className="p-3 text-slate-300">{u.lastLoginAt ? format(u.lastLoginAt, 'dd/MM/yyyy HH:mm') : 'Nunca acessou'}</td>
+                <td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${u.mustChangePassword ? 'bg-amber-500/20 text-amber-200' : 'bg-emerald-500/15 text-emerald-200'}`}>{u.mustChangePassword ? 'Pendente' : 'OK'}</span></td>
                 <td className="p-3"><UserActions user={{ id: u.id, isActive: u.isActive }} /></td>
               </tr>
             ))}

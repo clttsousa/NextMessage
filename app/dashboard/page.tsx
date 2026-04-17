@@ -10,9 +10,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default async function DashboardPage() {
-  const session = await requireAuth();
+  const { session } = await requireAuth();
 
-  const [total, pendente, andamento, semRetorno, followUp, resolvido, virouOs, byUser, recent, myAttendances, activeUsers] = await Promise.all([
+  const [total, pendente, andamento, semRetorno, followUp, resolvido, virouOs, byUser, recent, myAttendances] = await Promise.all([
     prisma.attendance.count(),
     prisma.attendance.count({ where: { status: 'PENDENTE' } }),
     prisma.attendance.count({ where: { status: 'EM_ATENDIMENTO' } }),
@@ -23,8 +23,11 @@ export default async function DashboardPage() {
     prisma.attendance.groupBy({ by: ['assignedTo'], _count: true }),
     prisma.attendance.findMany({ take: 8, orderBy: { createdAt: 'desc' }, include: { assignee: true } }),
     prisma.attendance.findMany({ where: { assignedTo: session.userId }, take: 6, orderBy: [{ status: 'asc' }, { createdAt: 'desc' }] }),
-    prisma.user.findMany({ where: { isActive: true }, select: { id: true, name: true } })
   ]);
+  const responsibleIds = byUser.map((entry) => entry.assignedTo).filter((id): id is string => Boolean(id));
+  const activeUsers = responsibleIds.length
+    ? await prisma.user.findMany({ where: { id: { in: responsibleIds }, isActive: true }, select: { id: true, name: true } })
+    : [];
   const userNameById = new Map(activeUsers.map((u) => [u.id, u.name]));
 
   const metrics = [

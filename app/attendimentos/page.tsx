@@ -6,22 +6,31 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
 
+const PAGE_SIZE = 20;
+
 export default async function AttendancesPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   await requireAuth();
 
   const q = typeof searchParams.q === 'string' ? searchParams.q : undefined;
   const status = typeof searchParams.status === 'string' ? searchParams.status : undefined;
+  const page = Math.max(1, Number(typeof searchParams.page === 'string' ? searchParams.page : 1));
 
-  const attendances = await prisma.attendance.findMany({
-    where: {
-      AND: [
-        q ? { OR: [{ customerName: { contains: q, mode: 'insensitive' } }, { protocol: { contains: q } }, { phone: { contains: q } }] } : {},
-        status ? { status: status as any } : {}
-      ]
-    },
-    include: { assignee: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  const where = {
+    AND: [
+      q ? { OR: [{ customerName: { contains: q, mode: 'insensitive' as const } }, { protocol: { contains: q } }, { phone: { contains: q } }] } : {},
+      status ? { status: status as never } : {}
+    ]
+  };
+
+  const [attendances, total] = await Promise.all([
+    prisma.attendance.findMany({ where, include: { assignee: true }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+    prisma.attendance.count({ where })
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const queryBase = new URLSearchParams();
+  if (q) queryBase.set('q', q);
+  if (status) queryBase.set('status', status);
 
   return (
     <div className="space-y-4">
@@ -52,6 +61,14 @@ export default async function AttendancesPage({ searchParams }: { searchParams: 
       </Card>
 
       <AttendancesTable data={attendances.map(a => ({ id: a.id, protocol: a.protocol, customerName: a.customerName, phone: a.phone, reason: a.reason, status: a.status, assigneeName: a.assignee?.name || null, referenceDate: a.referenceDate.toISOString(), originalAttendantName: a.originalAttendantName }))} />
+
+      <Card className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-slate-300">Página {page} de {totalPages} • {total} registros</p>
+        <div className="flex gap-2">
+          <Link aria-disabled={page <= 1} className={`rounded-lg border px-3 py-1.5 text-sm ${page <= 1 ? 'pointer-events-none border-slate-800 text-slate-500' : 'border-slate-600 text-slate-100 hover:bg-slate-800'}`} href={`/attendimentos?${new URLSearchParams({ ...Object.fromEntries(queryBase), page: String(page - 1) }).toString()}`}>Anterior</Link>
+          <Link aria-disabled={page >= totalPages} className={`rounded-lg border px-3 py-1.5 text-sm ${page >= totalPages ? 'pointer-events-none border-slate-800 text-slate-500' : 'border-slate-600 text-slate-100 hover:bg-slate-800'}`} href={`/attendimentos?${new URLSearchParams({ ...Object.fromEntries(queryBase), page: String(page + 1) }).toString()}`}>Próxima</Link>
+        </div>
+      </Card>
     </div>
   );
 }

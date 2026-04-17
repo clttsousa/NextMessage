@@ -1,11 +1,16 @@
 import { cookies, headers } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import { prisma } from '@/lib/db/prisma';
+import { env } from '@/lib/config/env';
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret');
+const secret = new TextEncoder().encode(env.JWT_SECRET);
 const cookieName = 'ops_session';
 
-export type SessionPayload = { userId: string; role: 'ADMIN' | 'ATTENDANT'; name: string; email: string };
+export type SessionPayload = {
+  userId: string;
+  role: 'ADMIN' | 'ATTENDANT';
+  mustChangePassword: boolean;
+};
 
 export async function createSession(payload: SessionPayload) {
   const token = await new SignJWT(payload)
@@ -14,7 +19,12 @@ export async function createSession(payload: SessionPayload) {
     .setExpirationTime('12h')
     .sign(secret);
 
-  cookies().set(cookieName, token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
+  cookies().set(cookieName, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
 }
 
 export async function clearSession() {
@@ -35,7 +45,22 @@ export async function getSession(): Promise<SessionPayload | null> {
 export async function getCurrentUser() {
   const session = await getSession();
   if (!session) return null;
-  return prisma.user.findUnique({ where: { id: session.userId } });
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      mustChangePassword: true,
+      lastLoginAt: true
+    }
+  });
+
+  if (!user || !user.isActive) return null;
+  return user;
 }
 
 export function getClientMeta() {

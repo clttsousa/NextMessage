@@ -23,7 +23,7 @@ export function CreateAttendanceForm() {
 
   const parseMessage = async () => {
     setFeedback('');
-    const res = await fetch('/api/attendances/parse', { method: 'POST', body: JSON.stringify({ rawMessage }) });
+    const res = await fetch('/api/attendances/parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rawMessage }) });
     const data = await res.json();
     if (!res.ok) return setFeedback(data.error || 'Não foi possível parsear a mensagem');
 
@@ -42,7 +42,7 @@ export function CreateAttendanceForm() {
       ...values,
       referenceDate: new Date(`${values.referenceDateInput}T00:00:00.000Z`).toISOString()
     };
-    const res = await fetch('/api/attendances', { method: 'POST', body: JSON.stringify(payload) });
+    const res = await fetch('/api/attendances', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) return setFeedback(data.error || 'Erro ao criar atendimento');
     window.location.href = `/attendimentos/${data.id}`;

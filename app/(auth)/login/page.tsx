@@ -15,13 +15,14 @@ export default function LoginPage() {
 
   const onSubmit = async (values: FormValues) => {
     setError('');
-    const res = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify(values) });
+    const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
     if (!res.ok) {
       const data = await res.json();
       setError(data.error || 'Falha ao autenticar');
       return;
     }
-    window.location.href = '/dashboard';
+    const data = await res.json();
+    window.location.href = data.mustChangePassword ? '/trocar-senha' : '/dashboard';
   };
 
   return (
