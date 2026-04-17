@@ -29,10 +29,10 @@ export default async function AuditPage({ searchParams }: { searchParams: Record
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Auditoria" subtitle="Rastreie alterações de forma semântica, com comparação de antes/depois por campo." />
+      <PageHeader eyebrow="Governança" title="Auditoria" subtitle="Rastreie alterações com leitura semântica de actor, ação, entidade e diferenças por campo." />
 
       <Card>
-        <form className="grid gap-3 md:grid-cols-4 md:items-end">
+        <form className="grid gap-3 md:grid-cols-[1.2fr,1fr,1fr,auto] md:items-end">
           <div>
             <label className="mb-1 block">Usuário</label>
             <select name="actor" defaultValue={actor ?? ''}>
@@ -60,9 +60,9 @@ export default async function AuditPage({ searchParams }: { searchParams: Record
       <div className="space-y-3">
         {logs.map((l) => (
           <Card key={l.id}>
-            <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="grid gap-3 lg:grid-cols-[1.7fr,auto] lg:items-center">
               <div className="flex items-center gap-2">
-                <AvatarInitials name={l.actor?.name ?? 'Sistema'} className="h-7 w-7 text-[10px]" />
+                <AvatarInitials name={l.actor?.name ?? 'Sistema'} className="h-8 w-8 text-[10px]" />
                 <div>
                   <p className="text-sm font-medium text-slate-100">{l.actor?.name ?? 'Sistema'} · <span className="text-blue-200">{l.action}</span></p>
                   <p className="text-xs text-slate-400">{l.entityType} #{l.entityId.slice(0, 8)}</p>

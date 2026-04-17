@@ -7,7 +7,7 @@ export function Button({ className, variant = 'primary', ...props }: ButtonHTMLA
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-50',
         variant === 'primary' && 'bg-primary text-white shadow-lg shadow-blue-900/35 hover:bg-blue-500 focus-visible:ring-blue-400',
         variant === 'secondary' && 'bg-slate-800 text-slate-100 hover:bg-slate-700 focus-visible:ring-slate-400',
         variant === 'ghost' && 'bg-transparent text-slate-100 hover:bg-slate-800/80 focus-visible:ring-slate-400',

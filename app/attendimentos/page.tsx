@@ -34,10 +34,10 @@ export default async function AttendancesPage({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Atendimentos" subtitle="Gerencie fila, responsável e próximos passos com prioridade operacional." actions={<Link href="/attendimentos/novo"><Button>Novo atendimento</Button></Link>} />
+      <PageHeader eyebrow="Fila operacional" title="Atendimentos" subtitle="Acompanhe SLA, ownership e próximos passos com foco em velocidade de ação." actions={<Link href="/attendimentos/novo"><Button>Novo atendimento</Button></Link>} />
 
-      <Card>
-        <form className="grid gap-3 md:grid-cols-[1.3fr,1fr,auto,auto] md:items-end">
+      <Card className="sticky top-3 z-20">
+        <form className="grid gap-3 md:grid-cols-[1.7fr,1fr,auto,auto] md:items-end">
           <div>
             <label className="mb-1 block">Busca inteligente</label>
             <input name="q" defaultValue={q} placeholder="Cliente, protocolo ou telefone" />
@@ -60,7 +60,14 @@ export default async function AttendancesPage({ searchParams }: { searchParams: 
         </form>
       </Card>
 
-      <AttendancesTable data={attendances.map(a => ({ id: a.id, protocol: a.protocol, customerName: a.customerName, phone: a.phone, reason: a.reason, status: a.status, assigneeName: a.assignee?.name || null, referenceDate: a.referenceDate.toISOString(), originalAttendantName: a.originalAttendantName }))} />
+      {attendances.length === 0 ? (
+        <Card className="p-10 text-center">
+          <p className="text-lg font-semibold text-slate-100">Nenhum atendimento encontrado</p>
+          <p className="mt-1 text-sm text-slate-400">Ajuste os filtros ou limpe a busca para carregar novamente a fila.</p>
+        </Card>
+      ) : (
+        <AttendancesTable data={attendances.map(a => ({ id: a.id, protocol: a.protocol, customerName: a.customerName, phone: a.phone, reason: a.reason, status: a.status, assigneeName: a.assignee?.name || null, referenceDate: a.referenceDate.toISOString(), originalAttendantName: a.originalAttendantName }))} />
+      )}
 
       <Card className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-slate-300">Página {page} de {totalPages} • {total} registros</p>
