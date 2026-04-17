@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, LayoutDashboard, ClipboardList, Users, ShieldCheck, LogOut } from 'lucide-react';
+import { Menu, X, LayoutDashboard, ClipboardList, Users, ShieldCheck, LogOut, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { AvatarInitials } from '@/components/ui/avatar-initials';
 import { cn } from '@/lib/utils';
 
-type NavItem = { href: string; label: string; icon: any; adminOnly?: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean };
 
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

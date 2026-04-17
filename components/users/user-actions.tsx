@@ -1,23 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export function UserActions({ user }: { user: { id: string; isActive: boolean } }) {
+  const router = useRouter();
   const [password, setPassword] = useState('');
   const [openReset, setOpenReset] = useState(false);
 
   const toggle = async () => {
-    await fetch(`/api/users/${user.id}`, { method: 'PATCH', body: JSON.stringify({ isActive: !user.isActive }) });
-    window.location.reload();
+    await fetch(`/api/users/${user.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive: !user.isActive }) });
+    router.refresh();
   };
 
   const resetPassword = async () => {
     if (!password.trim()) return;
-    await fetch(`/api/users/${user.id}`, { method: 'PATCH', body: JSON.stringify({ resetPassword: password }) });
-    window.location.reload();
+    await fetch(`/api/users/${user.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resetPassword: password }) });
+    router.refresh();
   };
 
   return (

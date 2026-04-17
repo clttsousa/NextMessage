@@ -8,7 +8,7 @@ function normalize(v: unknown) {
   return String(v);
 }
 
-function toDiff(oldValues: any, newValues: any): DiffEntry[] {
+function toDiff(oldValues: Record<string, unknown> | null | undefined, newValues: Record<string, unknown> | null | undefined): DiffEntry[] {
   const keys = Array.from(new Set([...(oldValues ? Object.keys(oldValues) : []), ...(newValues ? Object.keys(newValues) : [])]));
   return keys.map((key) => {
     const oldValue = normalize(oldValues?.[key]);
@@ -17,7 +17,7 @@ function toDiff(oldValues: any, newValues: any): DiffEntry[] {
   });
 }
 
-export function SemanticDiff({ oldValues, newValues }: { oldValues: any; newValues: any }) {
+export function SemanticDiff({ oldValues, newValues }: { oldValues: Record<string, unknown> | null; newValues: Record<string, unknown> | null }) {
   const entries = toDiff(oldValues, newValues);
 
   if (entries.length === 0) {

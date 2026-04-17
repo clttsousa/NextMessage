@@ -10,7 +10,7 @@ import { PriorityBadge } from '@/components/ui/priority-badge';
 import { PageHeader } from '@/components/ui/page-header';
 
 export default async function AttendanceDetailPage({ params }: { params: { id: string } }) {
-  const session = await requireAuth();
+  const { session } = await requireAuth();
   const attendance = await prisma.attendance.findUnique({ where: { id: params.id }, include: { assignee: true, history: { include: { performer: true }, orderBy: { createdAt: 'desc' } } } });
   if (!attendance) notFound();
 

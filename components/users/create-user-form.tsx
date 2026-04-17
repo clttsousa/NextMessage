@@ -6,19 +6,21 @@ import { userSchema } from '@/lib/schemas/user';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 
 type FormValues = z.infer<typeof userSchema>;
 
 export function CreateUserForm() {
+  const router = useRouter();
   const [msg, setMsg] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(userSchema), defaultValues: { role: 'ATTENDANT', isActive: true, mustChangePassword: true } });
 
   const submit = async (values: FormValues) => {
-    const res = await fetch('/api/users', { method: 'POST', body: JSON.stringify(values) });
+    const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
     const data = await res.json();
     if (!res.ok) setMsg(data.error || 'Erro ao criar usuário');
-    else { setMsg('Usuário criado com sucesso'); window.location.reload(); }
+    else { setMsg('Usuário criado com sucesso'); router.refresh(); }
   };
 
   return (
