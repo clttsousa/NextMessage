@@ -28,7 +28,7 @@ export function PriorityBadge({ referenceDate, status, className }: { referenceD
   const priority = getPriority(referenceDate, status);
 
   return (
-    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium', tones[priority.tone], className)}>
+    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium transition', tones[priority.tone], priority.tone === 'critical' && 'pulse-critical', className)}>
       {priority.label}
     </span>
   );

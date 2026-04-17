@@ -7,17 +7,53 @@ import { format } from 'date-fns';
 import { RoleBadge } from '@/components/ui/badge';
 import { AvatarInitials } from '@/components/ui/avatar-initials';
 import { PageHeader } from '@/components/ui/page-header';
+import { Button } from '@/components/ui/button';
 
-export default async function UsersPage() {
+export default async function UsersPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   await requireAdmin();
-  const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' }, select: { id: true, name: true, email: true, role: true, isActive: true, mustChangePassword: true, lastLoginAt: true } });
+
+  const q = typeof searchParams.q === 'string' ? searchParams.q : undefined;
+  const status = typeof searchParams.status === 'string' ? searchParams.status : undefined;
+
+  const users = await prisma.user.findMany({
+    where: {
+      AND: [
+        q ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, { email: { contains: q, mode: 'insensitive' } }] } : {},
+        status === 'ativo' ? { isActive: true } : {},
+        status === 'inativo' ? { isActive: false } : {}
+      ]
+    },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, name: true, email: true, role: true, isActive: true, mustChangePassword: true, lastLoginAt: true }
+  });
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Gestão de usuários" subtitle="Administre acesso, perfis e segurança da equipe operacional." />
+      <PageHeader eyebrow="Administração" title="Gestão de usuários" subtitle="Administre acesso, perfil e segurança da equipe com clareza operacional." />
+
+      <Card>
+        <form className="grid gap-3 md:grid-cols-[1.5fr,1fr,auto,auto] md:items-end">
+          <div>
+            <label className="mb-1 block">Buscar usuário</label>
+            <input name="q" defaultValue={q} placeholder="Nome ou e-mail" />
+          </div>
+          <div>
+            <label className="mb-1 block">Status</label>
+            <select name="status" defaultValue={status || ''}>
+              <option value="">Todos</option>
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </div>
+          <Button type="submit">Filtrar</Button>
+          <a href="/usuarios" className="inline-flex h-10 items-center rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200">Limpar</a>
+        </form>
+      </Card>
+
       <CreateUserForm />
+
       <Card className="overflow-auto p-0">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-[1100px] text-sm">
           <thead>
             <tr className="border-b border-slate-800 text-slate-300">
               <th className="p-3 text-left font-medium">Usuário</th>
