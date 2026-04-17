@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  ATTENDANT
+}
+
+enum AttendanceStatus {
+  PENDENTE
+  EM_ATENDIMENTO
+  SEM_RETORNO
+  RETORNAR_DEPOIS
+  RESOLVIDO
+  VIROU_OS
+  CANCELADO
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  name               String
+  email              String            @unique
+  passwordHash       String            @map("password_hash")
+  role               UserRole
+  isActive           Boolean           @default(true) @map("is_active")
+  mustChangePassword Boolean           @default(false) @map("must_change_password")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  createdBy          String?           @map("created_by")
+  lastLoginAt        DateTime?         @map("last_login_at")
+  attendances        Attendance[]      @relation("AssignedAttendances")
+  historyEntries     AttendanceHistory[]
+  audits             AuditLog[]
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Attendance {
+  id                   String              @id @default(cuid())
+  protocol             String              @unique
+  customerName         String              @map("customer_name")
+  address              String
+  phone                String
+  reason               String
+  originalAttendantName String             @map("original_attendant_name")
+  referenceDate        DateTime            @map("reference_date")
+  status               AttendanceStatus    @default(PENDENTE)
+  assignedTo           String?             @map("assigned_to")
+  assignedAt           DateTime?           @map("assigned_at")
+  contactedAt          DateTime?           @map("contacted_at")
+  serviceResult        String?             @map("service_result")
+  outcome              String?
+  notes                String?
+  needsFollowUp        Boolean             @default(false) @map("needs_follow_up")
+  followUpDate         DateTime?           @map("follow_up_date")
+  becameServiceOrder   Boolean             @default(false) @map("became_service_order")
+  serviceOrderNumber   String?             @map("service_order_number")
+  serviceOrderJustification String?        @map("service_order_justification")
+  cancellationReason   String?             @map("cancellation_reason")
+  createdBy            String              @map("created_by")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedBy            String?             @map("updated_by")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  closedAt             DateTime?           @map("closed_at")
+  closedBy             String?             @map("closed_by")
+  canceledAt           DateTime?           @map("canceled_at")
+  canceledBy           String?             @map("canceled_by")
+  assignee             User?               @relation("AssignedAttendances", fields: [assignedTo], references: [id])
+  history              AttendanceHistory[]
+
+  @@index([status])
+  @@index([assignedTo])
+  @@index([referenceDate])
+  @@index([customerName])
+  @@index([phone])
+  @@map("attendances")
+}
+
+model AttendanceHistory {
+  id           String   @id @default(cuid())
+  attendanceId String   @map("attendance_id")
+  actionType   String   @map("action_type")
+  description  String
+  performedBy  String?  @map("performed_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  performer    User?    @relation(fields: [performedBy], references: [id])
+
+  @@index([attendanceId])
+  @@index([createdAt])
+  @@map("attendance_history")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorUserId String? @map("actor_user_id")
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  action     String
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+  actor      User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
