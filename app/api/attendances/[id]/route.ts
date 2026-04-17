@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       await tx.attendanceHistory.create({
         data: {
           attendanceId: existing.id,
-          actionType: 'UPDATED',
+          actionType: data.status === 'RESOLVIDO' ? 'RESOLVED' : data.status === 'CANCELADO' ? 'CANCELED' : 'UPDATED',
           description: `Status atualizado para ${data.status}`,
           performedBy: session.userId
         }

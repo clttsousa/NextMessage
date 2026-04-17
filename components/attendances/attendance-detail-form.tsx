@@ -1,7 +1,7 @@
 'use client';
 
 import { Attendance, AttendanceStatus } from '@prisma/client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,13 +24,17 @@ export function AttendanceDetailForm({
   canEdit,
   canClaim,
   isAdmin,
-  users
+  users,
+  protocol,
+  customerName
 }: {
   attendance: AttendanceDetail;
   canEdit: boolean;
   canClaim: boolean;
   isAdmin: boolean;
   users: Array<{ id: string; name: string }>;
+  protocol: string;
+  customerName: string;
 }) {
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -59,6 +63,12 @@ export function AttendanceDetailForm({
   const status = watch('status');
   const needsFollowUp = watch('needsFollowUp');
   const becameServiceOrder = watch('becameServiceOrder');
+
+  useEffect(() => {
+    const current = JSON.parse(localStorage.getItem('ops.recent.protocols') ?? '[]') as Array<{ id: string; protocol: string; customerName: string }>;
+    const next = [{ id: attendance.id, protocol, customerName }, ...current.filter((item) => item.id !== attendance.id)].slice(0, 10);
+    localStorage.setItem('ops.recent.protocols', JSON.stringify(next));
+  }, [attendance.id, protocol, customerName]);
 
   const submit = async (values: FormValues) => {
     const res = await fetch(`/api/attendances/${attendance.id}`, {
