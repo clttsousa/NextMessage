@@ -26,6 +26,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Record
   });
 
   const actors = await prisma.user.findMany({ where: { isActive: true }, select: { id: true, name: true }, take: 50 });
+  const actionOptions = ['LOGIN', 'CREATE', 'UPDATE', 'REOPEN', 'REASSIGN', 'RESET_PASSWORD', 'CLAIM', 'CHANGE_PASSWORD'];
 
   return (
     <div className="space-y-4">
@@ -44,7 +45,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Record
           </div>
           <div>
             <label className="mb-1 block">Ação</label>
-            <input name="action" defaultValue={action} placeholder="Ex: UPDATE" />
+            <select name="action" defaultValue={action ?? ''}>
+              <option value="">Todas</option>
+              {actionOptions.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="mb-1 block">Entidade</label>
@@ -70,6 +76,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Record
               </div>
               <span className="text-xs text-slate-400">{format(l.createdAt, 'dd/MM/yyyy HH:mm:ss')}</span>
             </div>
+            <p className="mt-2 text-xs text-slate-400">Campos alterados: {Object.keys(((l.newValues ?? {}) as Record<string, unknown>)).filter((key) => ((l.oldValues ?? {}) as Record<string, unknown>)[key] !== ((l.newValues ?? {}) as Record<string, unknown>)[key]).length}</p>
 
             <details className="mt-3 rounded-xl border border-slate-800 bg-slate-900/50 p-3">
               <summary className="cursor-pointer text-sm font-semibold text-slate-200">Ver diferenças</summary>

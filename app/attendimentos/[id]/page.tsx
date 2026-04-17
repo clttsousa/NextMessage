@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { AvatarInitials } from '@/components/ui/avatar-initials';
 import { PriorityBadge } from '@/components/ui/priority-badge';
 import { PageHeader } from '@/components/ui/page-header';
+import { HistoryTimeline } from '@/components/attendances/history-timeline';
 
 export default async function AttendanceDetailPage({ params }: { params: { id: string } }) {
   const { session } = await requireAuth();
@@ -50,19 +51,29 @@ export default async function AttendanceDetailPage({ params }: { params: { id: s
         </Card>
       </div>
 
-      <AttendanceDetailForm attendance={attendance} canEdit={canEdit} canClaim={canClaim} isAdmin={session.role === 'ADMIN'} users={users} />
+      <AttendanceDetailForm
+        attendance={attendance}
+        canEdit={canEdit}
+        canClaim={canClaim}
+        isAdmin={session.role === 'ADMIN'}
+        users={users}
+        protocol={attendance.protocol}
+        customerName={attendance.customerName}
+      />
 
       <Card>
         <h2 className="text-lg font-semibold">Histórico do atendimento</h2>
-        <ul className="mt-4 grid gap-3 md:grid-cols-2">
-          {attendance.history.map((h) => (
-            <li key={h.id} className="relative rounded-xl border border-slate-800 bg-slate-950/30 p-4 pl-6">
-              <span className="absolute left-3 top-5 h-2.5 w-2.5 rounded-full bg-blue-400" />
-              <p className="text-sm font-medium text-slate-100">{h.description}</p>
-              <p className="mt-1 text-xs text-slate-400">{h.performer?.name ?? 'Sistema'} • {format(h.createdAt, 'dd/MM/yyyy HH:mm')}</p>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4">
+          <HistoryTimeline
+            items={attendance.history.map((h) => ({
+              id: h.id,
+              actionType: h.actionType,
+              description: h.description,
+              createdAt: h.createdAt.toISOString(),
+              performerName: h.performer?.name ?? null
+            }))}
+          />
+        </div>
       </Card>
     </div>
   );

@@ -22,6 +22,25 @@ type Row = {
   originalAttendantName: string;
 };
 
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'ig');
+  return (
+    <>
+      {text.split(regex).map((part, index) =>
+        regex.test(part) ? (
+          <mark key={`${part}-${index}`} className="rounded bg-blue-500/25 px-1 text-blue-100">
+            {part}
+          </mark>
+        ) : (
+          <span key={`${part}-${index}`}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 function getUrgencyTone(referenceDate: string, status: AttendanceStatus) {
   if (['RESOLVIDO', 'VIROU_OS', 'CANCELADO'].includes(status)) return 'border-l-slate-700';
   const diffHours = (Date.now() - new Date(referenceDate).getTime()) / (1000 * 60 * 60);
@@ -31,23 +50,23 @@ function getUrgencyTone(referenceDate: string, status: AttendanceStatus) {
   return 'border-l-emerald-500';
 }
 
-export function AttendancesTable({ data }: { data: Row[] }) {
+export function AttendancesTable({ data, searchTerm = '' }: { data: Row[]; searchTerm?: string }) {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'protocol', desc: true }]);
 
   const columns = useMemo<ColumnDef<Row>[]>(
     () => [
-      { accessorKey: 'protocol', header: 'Protocolo' },
+      { accessorKey: 'protocol', header: 'Protocolo', cell: ({ row }) => <HighlightText text={row.original.protocol} query={searchTerm} /> },
       {
         accessorKey: 'customerName',
         header: 'Cliente',
         cell: ({ row }) => (
           <div>
-            <p className="font-semibold text-slate-100">{row.original.customerName}</p>
-            <p className="truncate text-xs text-slate-400">{row.original.reason}</p>
+            <p className="font-semibold text-slate-100"><HighlightText text={row.original.customerName} query={searchTerm} /></p>
+            <p className="truncate text-xs text-slate-400"><HighlightText text={row.original.reason} query={searchTerm} /></p>
           </div>
         )
       },
-      { accessorKey: 'phone', header: 'Telefone' },
+      { accessorKey: 'phone', header: 'Telefone', cell: ({ row }) => <HighlightText text={row.original.phone} query={searchTerm} /> },
       {
         accessorKey: 'status',
         header: 'Status / SLA',
@@ -81,7 +100,7 @@ export function AttendancesTable({ data }: { data: Row[] }) {
         )
       }
     ],
-    []
+    [searchTerm]
   );
 
   const table = useReactTable({ data, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() });
@@ -160,3 +179,5 @@ export function AttendancesTable({ data }: { data: Row[] }) {
     </>
   );
 }
+
+export type AttendanceTableRow = Row;

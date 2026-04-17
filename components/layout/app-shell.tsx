@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, LayoutDashboard, ClipboardList, Users, ShieldCheck, LogOut, type LucideIcon, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AvatarInitials } from '@/components/ui/avatar-initials';
 import { cn } from '@/lib/utils';
 import { CommandPalette } from '@/components/layout/command-palette';
+import { NotificationCenter } from '@/components/layout/notification-center';
+import { toast } from 'sonner';
 
 type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; count?: number };
 
@@ -24,6 +26,25 @@ export function AppShell({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.target as HTMLElement)?.closest('input,textarea,select,[contenteditable=true]')) return;
+      if (event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        window.location.href = '/attendimentos/novo';
+      }
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+      if (event.key === '?') {
+        toast.message('Atalhos disponíveis', { description: 'Ctrl/Cmd+K: comandos • N: novo atendimento • Esc: fechar painéis' });
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/attendimentos', label: 'Atendimentos', icon: ClipboardList, count: pendingCount },
@@ -33,7 +54,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-transparent">
-      <div className="mx-auto grid min-h-screen w-full max-w-[1920px] grid-cols-1 gap-4 p-3 md:grid-cols-[286px,1fr] md:gap-5 md:p-5">
+      <div className="mx-auto grid min-h-screen w-full max-w-[2400px] grid-cols-1 gap-4 p-3 md:grid-cols-[300px,1fr] md:gap-5 md:p-5">
         <aside className={cn('surface fixed inset-y-3 left-3 right-3 z-50 flex flex-col p-4 md:static md:inset-auto', open ? 'block md:flex' : 'hidden md:flex')}>
           <div className="mb-6 flex items-center justify-between border-b subtle-divider pb-4">
             <div>
@@ -104,11 +125,13 @@ export function AppShell({
               <CommandPalette
                 attendances={commandAttendances}
                 shortcuts={[
-                  { href: '/dashboard', label: 'Ir para Dashboard' },
-                  { href: '/attendimentos', label: 'Abrir fila de atendimentos' },
-                  { href: '/attendimentos/novo', label: 'Cadastrar novo atendimento' }
+                  { href: '/dashboard', label: 'Ir para Dashboard', hint: 'G D' },
+                  { href: '/attendimentos', label: 'Ir para Atendimentos', hint: 'G A' },
+                  { href: '/auditoria', label: 'Ir para Auditoria', hint: 'G U' },
+                  { href: '/attendimentos/novo', label: 'Novo atendimento', hint: 'N' }
                 ]}
               />
+              <NotificationCenter />
               <AvatarInitials name={user.name} className="h-8 w-8 text-xs md:hidden" />
             </div>
           </header>
